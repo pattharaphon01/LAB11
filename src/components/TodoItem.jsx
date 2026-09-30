@@ -1,12 +1,41 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, Trash2 } from 'lucide-react'
-import { PRIORITY } from '../constants'
+import { CalendarDays, Check, Trash2 } from 'lucide-react'
+import { CATEGORIES, PRIORITY } from '../constants'
+import { dueState, formatDue } from '../utils/date'
+
+function DueBadge({ todo }) {
+  if (!todo.due) return null
+  const state = dueState(todo)
+  const styles = {
+    overdue: 'bg-red-500/15 text-red-600',
+    today: 'bg-yellow-400/25 text-yellow-600',
+    future: 'bg-gray-500/10',
+    none: 'bg-gray-500/10',
+  }
+  const label =
+    state === 'overdue'
+      ? `เกินกำหนด · ${formatDue(todo.due)}`
+      : state === 'today'
+      ? 'วันนี้'
+      : formatDue(todo.due)
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${styles[state]}`}
+      style={state === 'future' || state === 'none' ? { color: 'var(--muted)' } : undefined}
+    >
+      <CalendarDays size={12} />
+      {label}
+    </span>
+  )
+}
 
 export default function TodoItem({ todo, onToggle, onDelete, onEdit, onCycle }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(todo.text)
   const inputRef = useRef(null)
   const p = PRIORITY[todo.priority]
+  const cat = CATEGORIES[todo.category]
 
   useEffect(() => {
     if (editing && inputRef.current) {
@@ -29,13 +58,13 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit, onCycle }) 
 
   return (
     <li className={`todo mb-2.5${todo.removing ? ' removing' : ''}`}>
-      <div className="card relative flex items-center gap-3 overflow-hidden rounded-xl py-3 pl-0 pr-3">
+      <div className="card relative flex items-start gap-3 overflow-hidden rounded-xl py-3 pl-0 pr-3">
         <span className={`absolute bottom-0 left-0 top-0 w-1 ${p.bar}`} />
 
         <button
           onClick={() => onToggle(todo.id)}
           aria-label="ทำเครื่องหมายว่าเสร็จ"
-          className={`ml-4 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
+          className={`ml-4 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
             todo.done
               ? 'border-indigo-500 bg-indigo-500 text-white'
               : 'border-gray-400/60 text-transparent hover:border-indigo-500'
@@ -73,6 +102,11 @@ export default function TodoItem({ todo, onToggle, onDelete, onEdit, onCycle }) 
               {todo.text}
             </span>
           )}
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cat.tag}`}>{cat.label}</span>
+            <DueBadge todo={todo} />
+          </div>
         </div>
 
         <button
